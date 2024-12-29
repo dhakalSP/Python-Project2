@@ -1,0 +1,159 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+import statsmodels.formula.api as smf
+import statsmodels.api as sm
+# Importing libraries
+
+lung_data = pd.read_csv('LungCapData2.csv')
+# Load File
+
+# view data types and basic structure
+print(lung_data.head())
+
+print(lung_data.tail())
+
+lung_data.info()
+
+list (lung_data.columns.values)
+
+lung_data.describe().round(2)
+# Descriptive statistics
+
+lung_data.describe().round(2)
+# Descriptive statistics
+
+lung_data[['LungCap', 'Height']].describe().round(2)
+# Descriptive statistics, LungCap & Height
+
+# Check if any null values
+print(lung_data.isnull().sum())
+
+#frequency plots for LungCap
+plt.figure(figsize=(12, 6))
+plt.subplot(1, 2, 1)
+sns.histplot(lung_data['LungCap'], kde=True)
+plt.title('Frequency of LungCap')
+plt.xlabel('LungCap')
+
+#frequency plots for Height
+plt.subplot(1, 2, 2)
+sns.histplot(lung_data['Height'], kde=True,color='Green')
+plt.title('Frequency of Height')
+plt.xlabel('Height')
+
+#frequency plots for LungCap # Select only numeric columns from the dataset
+numeric_data = lung_data.select_dtypes(include=[np.number])
+
+# Generate a correlation matrix
+corr_lung_data = numeric_data.corr()
+
+# Plot the heatmap
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_lung_data, annot=True, cmap="coolwarm", vmin=-1.0, vmax=1.0, fmt=".2f")
+plt.title("Heatmap of Lung Data")
+plt.show()
+
+# Model 1: LungCap ~ Height
+model1 = smf.ols('LungCap ~ Height', data=lung_data).fit()
+
+# Model 2: LungCap ~ Height + Height^2
+lung_data['Height_sq'] = lung_data['Height'] ** 2
+model2 = smf.ols('LungCap ~ Height + Height_sq', data=lung_data).fit()
+
+# Model 3: LungCap ~ Height + Height^2 + Height^3
+lung_data['Height_cub'] = lung_data['Height'] ** 3
+model3 = smf.ols('LungCap ~ Height + Height_sq + Height_cub', data=lung_data).fit()
+
+# ANOVA for model1 vs model2
+anova_result1 = sm.stats.anova_lm(model1, model2)
+print('ANOVA between model1 and model2:')
+print(anova_result1)
+
+# ANOVA for model2 vs model3
+anova_result2 = sm.stats.anova_lm(model2, model3)
+print('\nANOVA between model2 and model3:')
+print(anova_result2)
+
+
+#ANOVA of model 2 and model 1-
+#For ANOVA model 1 Vs Model2, Fis 58.91 and P-value is 6.68-14. with such small P value, model 2 provides 
+#statistically significant improvement over model 1
+
+
+#ANOVA of model 2 and model 3-
+# #For ANOVA model 2 Vs Model 3, F is 0.19  and P-value is 0.658. Pvalue is greater than .5 which suggest that adding height^3 does not 
+#provide a statistically significant improvement
+
+
+from statsmodels.formula.api import ols
+
+formula = 'Q("LungCap") ~ Gender * Smoke * Age' 
+
+# Fit the model using OLS regression
+model = ols(formula, data=lung_data).fit()
+
+# Perform ANOVA with type 2 sum of squares
+aov_table = sm.stats.anova_lm(model, typ=2)
+
+# Display ANOVA 
+print(aov_table)
+
+print(lung_data.columns)
+
+
+# plot for Gender and smoke against LungCap
+sm.graphics.interaction_plot(lung_data['Gender'],  lung_data['Smoke'],  lung_data['LungCap'], colors=['red', 'blue'],      
+    ms=10                   
+)
+plt.show()
+
+#single plot of all 3 models
+plt.plot(x_vals, model1.predict(pd.DataFrame({'Height': x_vals})), label='Model 1', color='blue')
+plt.plot(x_vals, model2.predict(pd.DataFrame({'Height': x_vals, 'Height_sq': x_vals**2})), label='Model 2', color='green')
+plt.plot(x_vals, model3.predict(pd.DataFrame({'Height': x_vals, 'Height_sq': x_vals**2, 'Height_cub': x_vals**3})), label='Model 3', color='red')
+
+plt.xlabel('Height')
+plt.ylabel('LungCap')
+plt.title('Plot of all 3 models')
+plt.legend()
+plt.show()
+
+#scatter plots of the actual data
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Height', y='LungCap', data=lung_data, color='gray')
+
+x_vals = np.linspace(lung_data['Height'].min(), lung_data['Height'].max(), 100)
+
+plt.show()
+
+# single plot of all 3 models compared to scatter plots of the actual data
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x='Height', y='LungCap', data=lung_data, color='gray')
+
+x_vals = np.linspace(lung_data['Height'].min(), lung_data['Height'].max(), 100)
+
+
+plt.plot(x_vals, model1.predict(pd.DataFrame({'Height': x_vals})), label='Model 1', color='blue')
+plt.plot(x_vals, model2.predict(pd.DataFrame({'Height': x_vals, 'Height_sq': x_vals**2})), label='Model 2', color='green')
+plt.plot(x_vals, model3.predict(pd.DataFrame({'Height': x_vals, 'Height_sq': x_vals**2, 'Height_cub': x_vals**3})), label='Model 3', color='red')
+
+plt.xlabel('Height')
+plt.ylabel('LungCap')
+plt.title('Comparison of the Models')
+plt.legend()
+plt.show()
+
+#ANOVA of model 2 and model 1-
+#For ANOVA model 1 Vs Model2, Fis 58.91 and P-value is 6.68-14. with such small P value, model 2 provides 
+#statistically significant improvement over model 1
+
+
+#ANOVA of model 2 and model 3-
+# #For ANOVA model 2 Vs Model 3, F is 0.19  and P-value is 0.658. Pvalue is greater than .5 which suggest that adding height^3 does not 
+#provide a statistically significant improvement
+
+
+
+
